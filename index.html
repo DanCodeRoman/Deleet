@@ -82,14 +82,15 @@
         } from 'firebase/firestore';
 
         // --- CONFIGURATION SECTION ---
-        // If hosting on GitHub, you MUST replace the values below with your own Firebase Config keys.
+        // I have inserted your keys here:
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_PROJECT_ID.appspot.com",
-            messagingSenderId: "YOUR_SENDER_ID",
-            appId: "YOUR_APP_ID"
+            apiKey: "AIzaSyATLAN5A3k7UHfvzgS_KrzxREKpJqtsfvc",
+            authDomain: "deleet-c2da7.firebaseapp.com",
+            projectId: "deleet-c2da7",
+            storageBucket: "deleet-c2da7.firebasestorage.app",
+            messagingSenderId: "253339813894",
+            appId: "1:253339813894:web:2090055e94765fe47a5b87",
+            measurementId: "G-5PGMK9BJ5Q"
         };
         
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
@@ -140,16 +141,24 @@
         // --- View Components ---
 
         const ProfileView = ({ user, posts }) => {
+            // Safety check: Don't render if user data isn't ready
+            if (!user) {
+                return <div className="flex-1 bg-black pt-12 flex items-center justify-center text-gray-500">Loading profile...</div>;
+            }
+
             const userPosts = posts.filter(p => p.uid === user.uid);
             const totalLikes = userPosts.reduce((acc, curr) => acc + (curr.likes || 0), 0);
+            
+            // Safe access to username
+            const initial = (user.username && user.username.length > 0) ? user.username[0].toUpperCase() : '?';
 
             return (
                 <div className="flex-1 overflow-y-auto bg-black pt-12 pb-20 animate-slide-up">
                     <div className="flex flex-col items-center gap-3 px-4">
                         <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-cyan-400 to-pink-500 flex items-center justify-center text-4xl font-bold border-4 border-gray-900">
-                            {user.username[0].toUpperCase()}
+                            {initial}
                         </div>
-                        <h2 className="text-white font-bold text-xl">@{user.username}</h2>
+                        <h2 className="text-white font-bold text-xl">@{user.username || 'user'}</h2>
                         
                         <div className="flex gap-8 mt-2 text-center w-full justify-center border-b border-gray-800 pb-6">
                             <div><div className="font-bold text-white text-lg">0</div><div className="text-gray-400 text-xs">Following</div></div>

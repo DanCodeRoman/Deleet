@@ -1,0 +1,574 @@
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { initializeApp } from 'firebase/app';
+import { 
+  getAuth, 
+  signInAnonymously, 
+  onAuthStateChanged,
+  signInWithCustomToken 
+} from 'firebase/auth';
+import { 
+  getFirestore, 
+  collection, 
+  addDoc, 
+  onSnapshot, 
+  doc, 
+  updateDoc, 
+  deleteDoc, 
+  increment, 
+  serverTimestamp, 
+  query, 
+  orderBy, 
+  arrayUnion 
+} from 'firebase/firestore';
+import { 
+  Heart, 
+  MessageCircle, 
+  Trash2, 
+  PlusSquare, 
+  User, 
+  Send, 
+  X, 
+  Music2, 
+  Share2,
+  Video,
+  Image as ImageIcon,
+  Type
+} from 'lucide-react';
+
+// --- Firebase Configuration ---
+const firebaseConfig = JSON.parse(__firebase_config);
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+// --- Stock Assets for Demo ---
+const STOCK_VIDEOS = [
+  { url: "https://assets.mixkit.co/videos/preview/mixkit-tree-branches-in-the-breeze-1188-large.mp4", thumb: "https://images.unsplash.com/photo-1518495973542-4542c06a5843?w=500" },
+  { url: "https://assets.mixkit.co/videos/preview/mixkit-waves-coming-to-the-beach-1166-large.mp4", thumb: "https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=500" },
+  { url: "https://assets.mixkit.co/videos/preview/mixkit-white-cat-lying-among-the-grass-2284-large.mp4", thumb: "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=500" },
+  { url: "https://assets.mixkit.co/videos/preview/mixkit-ink-swirling-in-water-266-large.mp4", thumb: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=500" },
+];
+
+const STOCK_IMAGES = [
+  "https://images.unsplash.com/photo-1516233758813-a381c69b1935?w=800", // City neon
+  "https://images.unsplash.com/photo-1511920170033-f8396924c348?w=800", // Coffee
+  "https://images.unsplash.com/photo-1531297461136-82lw9b44d940?w=800", // Tech
+  "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=800", // Mountain
+];
+
+// --- Components ---
+
+const CommentModal = ({ post, isOpen, onClose, currentUser }) => {
+  const [newComment, setNewComment] = useState('');
+  const [localComments, setLocalComments] = useState(post.comments || []);
+
+  // Update local comments when post updates
+  useEffect(() => {
+    setLocalComments(post.comments || []);
+  }, [post.comments]);
+
+  const handleSend = async (e) => {
+    e.preventDefault();
+    if (!newComment.trim()) return;
+
+    const commentData = {
+      username: currentUser.username || 'Anon',
+      text: newComment,
+      timestamp: Date.now()
+    };
+
+    // Optimistic update
+    setLocalComments([...localComments, commentData]);
+    setNewComment('');
+
+    try {
+      const postRef = doc(db, 'artifacts', appId, 'public', 'data', 'posts', post.id);
+      await updateDoc(postRef, {
+        comments: arrayUnion(commentData)
+      });
+    } catch (err) {
+      console.error("Failed to comment", err);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center pointer-events-none">
+      <div className="absolute inset-0 bg-black/50 pointer-events-auto" onClick={onClose} />
+      <div className="bg-white dark:bg-gray-900 w-full sm:w-[400px] h-[70vh] rounded-t-2xl sm:rounded-2xl flex flex-col pointer-events-auto shadow-2xl animate-slide-up">
+        <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center">
+          <h3 className="font-bold text-gray-900 dark:text-white">{localComments.length} comments</h3>
+          <button onClick={onClose}><X className="w-6 h-6 text-gray-500" /></button>
+        </div>
+        
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {localComments.length === 0 ? (
+            <div className="text-center text-gray-500 mt-10">No comments yet. Be the first!</div>
+          ) : (
+            localComments.map((c, i) => (
+              <div key={i} className="flex gap-3">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-500 to-orange-400 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                  {c.username[0].toUpperCase()}
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-gray-600 dark:text-gray-300">{c.username}</div>
+                  <div className="text-sm text-gray-800 dark:text-gray-100">{c.text}</div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        <form onSubmit={handleSend} className="p-3 border-t border-gray-200 dark:border-gray-800 flex gap-2">
+          <input 
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            placeholder="Add a nice comment..."
+            className="flex-1 bg-gray-100 dark:bg-gray-800 rounded-full px-4 py-2 text-sm outline-none text-gray-900 dark:text-white"
+          />
+          <button type="submit" className="p-2 text-pink-500 font-bold"><Send className="w-5 h-5" /></button>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+const PostItem = ({ post, isActive, currentUser }) => {
+  const videoRef = useRef(null);
+  const [showComments, setShowComments] = useState(false);
+  const [liked, setLiked] = useState(false); // Local state for immediate feedback
+  const [deleteVoted, setDeleteVoted] = useState(false);
+
+  useEffect(() => {
+    if (isActive && post.type === 'video' && videoRef.current) {
+      videoRef.current.currentTime = 0;
+      videoRef.current.play().catch(e => console.log("Autoplay prevented", e));
+    } else if (post.type === 'video' && videoRef.current) {
+      videoRef.current.pause();
+    }
+  }, [isActive, post.type]);
+
+  const handleLike = async () => {
+    if (liked) return;
+    setLiked(true);
+    const postRef = doc(db, 'artifacts', appId, 'public', 'data', 'posts', post.id);
+    await updateDoc(postRef, { likes: increment(1) });
+  };
+
+  const handleVoteDelete = async () => {
+    if (deleteVoted) return; // Prevent spamming in one session
+    setDeleteVoted(true);
+    
+    const postRef = doc(db, 'artifacts', appId, 'public', 'data', 'posts', post.id);
+    
+    // Check if we hit the threshold
+    if ((post.deleteVotes || 0) + 1 >= 10) {
+      await deleteDoc(postRef);
+    } else {
+      await updateDoc(postRef, { deleteVotes: increment(1) });
+    }
+  };
+
+  return (
+    <div className="relative w-full h-full snap-start shrink-0 flex items-center justify-center bg-black overflow-hidden">
+      {/* --- Content Layer --- */}
+      <div className="absolute inset-0 bg-gray-900 flex items-center justify-center">
+        {post.type === 'video' && (
+          <video 
+            ref={videoRef}
+            src={post.contentUrl} 
+            className="w-full h-full object-cover"
+            loop
+            muted
+            playsInline
+          />
+        )}
+        {post.type === 'image' && (
+          <img 
+            src={post.contentUrl} 
+            className="w-full h-full object-cover" 
+            alt="Post"
+          />
+        )}
+        {post.type === 'text' && (
+          <div className="w-full h-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center p-8 text-center">
+            <h2 className="text-2xl sm:text-4xl font-bold text-white leading-tight break-words shadow-sm">
+              "{post.text}"
+            </h2>
+          </div>
+        )}
+      </div>
+
+      {/* --- Overlay Gradient --- */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/80 pointer-events-none" />
+
+      {/* --- Right Sidebar Interactions --- */}
+      <div className="absolute right-2 bottom-20 flex flex-col items-center gap-6 z-10">
+        <div className="flex flex-col items-center gap-1">
+          <div className="w-12 h-12 rounded-full border-2 border-white p-0.5 overflow-hidden bg-black">
+             <div className="w-full h-full rounded-full bg-gradient-to-br from-yellow-400 to-red-500 flex items-center justify-center text-white font-bold text-sm">
+               {post.username[0].toUpperCase()}
+             </div>
+          </div>
+        </div>
+
+        <button onClick={handleLike} className="flex flex-col items-center gap-1 group">
+          <div className={`p-2 rounded-full bg-black/20 backdrop-blur-sm transition-transform group-active:scale-90 ${liked ? 'text-red-500' : 'text-white'}`}>
+            <Heart className={`w-8 h-8 ${liked ? 'fill-current' : ''}`} />
+          </div>
+          <span className="text-white text-xs font-semibold">{post.likes || 0}</span>
+        </button>
+
+        <button onClick={() => setShowComments(true)} className="flex flex-col items-center gap-1 group">
+           <div className="p-2 rounded-full bg-black/20 backdrop-blur-sm text-white transition-transform group-active:scale-90">
+            <MessageCircle className="w-8 h-8 fill-white/20" />
+          </div>
+          <span className="text-white text-xs font-semibold">{(post.comments || []).length}</span>
+        </button>
+
+        <button onClick={handleVoteDelete} className="flex flex-col items-center gap-1 group">
+           <div className={`p-2 rounded-full bg-black/20 backdrop-blur-sm transition-transform group-active:scale-90 ${deleteVoted ? 'text-red-500' : 'text-white'}`}>
+            <Trash2 className="w-8 h-8" />
+          </div>
+          <span className="text-white text-[10px] font-semibold text-center w-12 leading-none">
+            {post.deleteVotes || 0}/10<br/>to del
+          </span>
+        </button>
+      </div>
+
+      {/* --- Bottom Info --- */}
+      <div className="absolute bottom-0 left-0 w-full p-4 pb-6 pr-16 bg-gradient-to-t from-black/90 to-transparent pointer-events-none">
+        <div className="pointer-events-auto">
+          <h3 className="font-bold text-white text-lg drop-shadow-md">@{post.username}</h3>
+          <p className="text-white/90 text-sm mt-2 line-clamp-3 font-medium drop-shadow-md">
+            {post.caption}
+            {post.type === 'text' && " #thought"}
+            {post.type === 'video' && " #video"}
+            {post.type === 'image' && " #photo"}
+          </p>
+          <div className="flex items-center gap-2 mt-3 text-white/70 text-xs">
+            <Music2 className="w-3 h-3 animate-spin-slow" />
+            <span>Original Sound - {post.username}</span>
+          </div>
+        </div>
+      </div>
+
+      <CommentModal 
+        post={post} 
+        isOpen={showComments} 
+        onClose={() => setShowComments(false)}
+        currentUser={currentUser}
+      />
+    </div>
+  );
+};
+
+const CreatePostModal = ({ isOpen, onClose, currentUser }) => {
+  const [type, setType] = useState('text'); // text, image, video
+  const [text, setText] = useState('');
+  const [caption, setCaption] = useState('');
+  const [selectedMedia, setSelectedMedia] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  if (!isOpen) return null;
+
+  const handleSubmit = async () => {
+    if (type === 'text' && !text) return;
+    if ((type === 'video' || type === 'image') && !selectedMedia) return;
+
+    setIsSubmitting(true);
+    try {
+      const postsRef = collection(db, 'artifacts', appId, 'public', 'data', 'posts');
+      await addDoc(postsRef, {
+        type,
+        text: type === 'text' ? text : null,
+        contentUrl: selectedMedia, // In a real app, this is a storage URL
+        caption: caption || 'Check this out!',
+        username: currentUser.username,
+        uid: currentUser.uid,
+        likes: 0,
+        deleteVotes: 0,
+        comments: [],
+        createdAt: Date.now() // Simple timestamp for sorting
+      });
+      onClose();
+      // Reset form
+      setText('');
+      setCaption('');
+      setSelectedMedia(null);
+    } catch (e) {
+      console.error("Post failed", e);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+      <div className="bg-gray-900 w-full max-w-md rounded-2xl overflow-hidden border border-gray-800 flex flex-col max-h-[90vh]">
+        <div className="p-4 flex justify-between items-center border-b border-gray-800">
+          <h2 className="text-white font-bold text-lg">New Post</h2>
+          <button onClick={onClose}><X className="text-white" /></button>
+        </div>
+
+        <div className="flex p-2 gap-2 bg-gray-900">
+          {['text', 'image', 'video'].map(t => (
+            <button 
+              key={t}
+              onClick={() => { setType(t); setSelectedMedia(null); }}
+              className={`flex-1 py-2 rounded-lg text-sm font-bold flex items-center justify-center gap-2 ${type === t ? 'bg-white text-black' : 'bg-gray-800 text-gray-400'}`}
+            >
+              {t === 'text' && <Type className="w-4 h-4"/>}
+              {t === 'image' && <ImageIcon className="w-4 h-4"/>}
+              {t === 'video' && <Video className="w-4 h-4"/>}
+              {t.charAt(0).toUpperCase() + t.slice(1)}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {type === 'text' ? (
+             <textarea 
+               className="w-full h-40 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-xl p-6 text-white text-xl font-bold placeholder-white/50 outline-none resize-none"
+               placeholder="What's on your mind?"
+               value={text}
+               onChange={e => setText(e.target.value)}
+             />
+          ) : (
+            <div className="space-y-4">
+              <p className="text-gray-400 text-sm">Select a stock {type} (Upload disabled in demo):</p>
+              <div className="grid grid-cols-2 gap-2">
+                {type === 'video' && STOCK_VIDEOS.map((vid, i) => (
+                  <div 
+                    key={i} 
+                    onClick={() => setSelectedMedia(vid.url)}
+                    className={`relative aspect-[9/16] rounded-lg overflow-hidden cursor-pointer border-4 ${selectedMedia === vid.url ? 'border-pink-500' : 'border-transparent'}`}
+                  >
+                    <img src={vid.thumb} className="w-full h-full object-cover opacity-80" alt="stock" />
+                    <div className="absolute inset-0 flex items-center justify-center"><Video className="text-white" /></div>
+                  </div>
+                ))}
+                {type === 'image' && STOCK_IMAGES.map((img, i) => (
+                   <div 
+                    key={i} 
+                    onClick={() => setSelectedMedia(img)}
+                    className={`relative aspect-square rounded-lg overflow-hidden cursor-pointer border-4 ${selectedMedia === img ? 'border-pink-500' : 'border-transparent'}`}
+                  >
+                    <img src={img} className="w-full h-full object-cover opacity-80" alt="stock" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <label className="text-gray-400 text-sm">Caption</label>
+            <input 
+              className="w-full bg-gray-800 text-white rounded-lg p-3 outline-none focus:ring-1 focus:ring-pink-500"
+              placeholder="#Hashtags @Friends"
+              value={caption}
+              onChange={e => setCaption(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="p-4 border-t border-gray-800">
+          <button 
+            disabled={isSubmitting}
+            onClick={handleSubmit}
+            className="w-full py-3 bg-pink-500 hover:bg-pink-600 active:bg-pink-700 text-white font-bold rounded-xl transition-colors disabled:opacity-50"
+          >
+            {isSubmitting ? 'Posting...' : 'Post'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default function App() {
+  const [user, setUser] = useState(null);
+  const [username, setUsername] = useState(localStorage.getItem('deleet_username') || '');
+  const [hasJoined, setHasJoined] = useState(!!username);
+  const [posts, setPosts] = useState([]);
+  const [showCreate, setShowCreate] = useState(false);
+  const feedRef = useRef(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  // --- Auth & Setup ---
+  useEffect(() => {
+    const initAuth = async () => {
+      if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+        await signInWithCustomToken(auth, __initial_auth_token);
+      } else {
+        await signInAnonymously(auth);
+      }
+    };
+    initAuth();
+    
+    const unsubscribe = onAuthStateChanged(auth, (u) => {
+      if (u) setUser({ uid: u.uid, username });
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // --- Update User object when username changes ---
+  useEffect(() => {
+    if (auth.currentUser) {
+      setUser({ uid: auth.currentUser.uid, username });
+    }
+  }, [username]);
+
+  // --- Data Fetching ---
+  useEffect(() => {
+    if (!user) return;
+    
+    // Note: We fetch all posts and sort in memory because compound queries (orderBy desc) require indexes which we might not have in this sandbox environment right away.
+    // For a production app, use orderBy('createdAt', 'desc') in the query.
+    const q = collection(db, 'artifacts', appId, 'public', 'data', 'posts');
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const fetchedPosts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      // Sort in memory to avoid index errors
+      fetchedPosts.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      setPosts(fetchedPosts);
+    }, (error) => {
+        console.error("Error fetching posts:", error);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
+
+  // --- Scroll Observer for Auto-Play ---
+  useEffect(() => {
+    const container = feedRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const index = Math.round(container.scrollTop / container.clientHeight);
+      setActiveIndex(index);
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [posts]);
+
+  // --- Join Handler ---
+  const handleJoin = (e) => {
+    e.preventDefault();
+    if (!username.trim()) return;
+    localStorage.setItem('deleet_username', username);
+    setHasJoined(true);
+  };
+
+  if (!hasJoined) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center p-4">
+        <div className="w-full max-w-md bg-gray-900 rounded-3xl p-8 border border-gray-800 text-center">
+          <div className="w-20 h-20 bg-gradient-to-tr from-cyan-400 to-pink-500 rounded-2xl mx-auto mb-6 flex items-center justify-center">
+            <Music2 className="w-10 h-10 text-white" />
+          </div>
+          <h1 className="text-3xl font-bold text-white mb-2">Deleet</h1>
+          <p className="text-gray-400 mb-8">Enter a username to join the anonymous feed.</p>
+          <form onSubmit={handleJoin} className="space-y-4">
+            <input 
+              type="text" 
+              placeholder="@username"
+              className="w-full bg-gray-800 border border-gray-700 rounded-xl p-4 text-white text-center text-lg outline-none focus:border-pink-500 transition-colors"
+              value={username}
+              onChange={e => setUsername(e.target.value.replace(/\s/g, '').toLowerCase())}
+              autoFocus
+            />
+            <button 
+              type="submit" 
+              className="w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-4 rounded-xl transition-transform active:scale-95"
+            >
+              Start Watching
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex justify-center bg-gray-950 h-screen w-full overflow-hidden">
+      {/* --- Main App Container (Mobile Aspect Ratio on Desktop) --- */}
+      <div className="relative w-full max-w-[450px] h-full bg-black shadow-2xl flex flex-col">
+        
+        {/* --- Top Nav --- */}
+        <div className="absolute top-0 left-0 w-full z-20 p-4 pt-6 bg-gradient-to-b from-black/80 to-transparent flex justify-between items-start pointer-events-none">
+          <div className="flex gap-4 text-white font-bold text-lg pointer-events-auto">
+            <span className="text-gray-400 font-normal">Following</span>
+            <span className="border-b-2 border-white pb-1">For You</span>
+          </div>
+        </div>
+
+        {/* --- The Feed --- */}
+        <div 
+          ref={feedRef}
+          className="flex-1 overflow-y-scroll snap-y snap-mandatory scrollbar-hide"
+          style={{ scrollBehavior: 'smooth' }}
+        >
+          {posts.length === 0 ? (
+            <div className="h-full w-full flex flex-col items-center justify-center text-gray-500 snap-start">
+              <div className="mb-4 p-4 rounded-full bg-gray-900"><Video className="w-8 h-8" /></div>
+              <p>No posts yet.</p>
+              <button onClick={() => setShowCreate(true)} className="mt-4 text-pink-500 font-bold">Create the first one!</button>
+            </div>
+          ) : (
+            posts.map((post, index) => (
+              <div key={post.id} className="w-full h-full snap-start relative">
+                 <PostItem 
+                   post={post} 
+                   isActive={index === activeIndex} 
+                   currentUser={user}
+                 />
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* --- Bottom Nav --- */}
+        <div className="absolute bottom-0 left-0 w-full h-16 bg-black text-gray-400 flex justify-around items-center border-t border-gray-800 z-20">
+          <button className="flex flex-col items-center gap-1 text-white">
+            <div className="w-6 h-6"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 19h20L12 2zm0 3.8l6.7 11.2H5.3L12 5.8z"/></svg></div> {/* Home Icon rough shape */}
+            <span className="text-[10px]">Home</span>
+          </button>
+          
+          <button className="flex flex-col items-center gap-1">
+            <Share2 className="w-5 h-5" />
+            <span className="text-[10px]">Friends</span>
+          </button>
+
+          <button onClick={() => setShowCreate(true)} className="relative -top-3">
+            <div className="w-12 h-8 bg-gradient-to-r from-cyan-400 to-pink-500 rounded-lg flex items-center justify-center hover:scale-105 transition-transform">
+              <div className="w-6 h-6 bg-black rounded flex items-center justify-center">
+                <PlusSquare className="w-4 h-4 text-white" />
+              </div>
+            </div>
+          </button>
+
+          <button className="flex flex-col items-center gap-1">
+            <MessageCircle className="w-5 h-5" />
+            <span className="text-[10px]">Inbox</span>
+          </button>
+
+          <button className="flex flex-col items-center gap-1">
+             <User className="w-5 h-5" />
+            <span className="text-[10px]">Profile</span>
+          </button>
+        </div>
+
+        <CreatePostModal 
+          isOpen={showCreate} 
+          onClose={() => setShowCreate(false)} 
+          currentUser={user} 
+        />
+
+      </div>
+    </div>
+  );
+}

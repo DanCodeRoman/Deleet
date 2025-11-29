@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BONEBOUND | The Orthopedic System</title>
+    <style>
+        :root {
+            /* Palette: Surgical Blue & Cold Steel */
+            --bg-dark: #0d1117;
+            --bg-panel: #161b22;
+            --bg-card: #21262d;
+            --text-main: #c9d1d9;
+            --text-white: #f0f6fc;
+            --ortho-blue: #2f81f7;
+            --ortho-dim: rgba(47, 129, 247, 0.15);
+            --steel: #30363d;
+            --border: #30363d;
+            --accent-green: #238636;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            line-height: 1.6;
+            scroll-behavior: smooth;
+        }
+
+        /* --- TYPOGRAPHY --- */
+        h1, h2, h3, h4 { color: var(--text-white); font-weight: 700; letter-spacing: -0.5px; }
+        h1 { font-size: 3.5rem; line-height: 1.1; text-transform: uppercase; }
+        h2 { font-size: 2rem; border-bottom: 2px solid var(--steel); padding-bottom: 10px; margin-bottom: 20px; display: inline-block; }
+        h3 { color: var(--ortho-blue); font-size: 1.2rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+        
+        a { text-decoration: none; color: var(--ortho-blue); transition: 0.2s; }
+        a:hover { text-decoration: underline; }
+
+        ul { list-style: none; }
+        li { margin-bottom: 8px; position: relative; padding-left: 20px; }
+        li::before { content: "•"; color: var(--ortho-blue); position: absolute; left: 0; font-weight: bold; }
+
+        /* --- LAYOUT UTILITIES --- */
+        .container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+        .section { padding: 80px 0; border-bottom: 1px solid var(--border); }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+
+        /* --- COMPONENTS --- */
+        .btn {
+            display: inline-block; padding: 12px 24px; background: var(--ortho-blue); color: white;
+            font-weight: 600; text-transform: uppercase; border-radius: 4px; border: 1px solid var(--ortho-blue);
+        }
+        .btn:hover { background: transparent; text-decoration: none; }
+
+        .card {
+            background: var(--bg-panel); border: 1px solid var(--border); padding: 25px; border-radius: 6px;
+            transition: transform 0.2s ease;
+        }
+        .card:hover { transform: translateY(-3px); border-color: var(--ortho-blue); }
+
+        .tag {
+            background: var(--steel); padding: 4px 8px; font-size: 0.8rem; border-radius: 4px; color: white; margin-right: 5px;
+        }
+
+        /* --- HEADER & HERO --- */
+        header {
+            position: fixed; top: 0; width: 100%; background: rgba(13, 17, 23, 0.95);
+            border-bottom: 1px solid var(--border); z-index: 1000; padding: 15px 0; backdrop-filter: blur(5px);
+        }
+        nav { display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-weight: 800; font-size: 1.5rem; letter-spacing: 2px; color: white; text-transform: uppercase; }
+        .nav-items a { margin-left: 20px; color: var(--text-main); font-size: 0.9rem; font-weight: 500; }
+        .nav-items a:hover { color: var(--ortho-blue); text-decoration: none; }
+
+        .hero {
+            height: 90vh; display: flex; align-items: center; justify-content: center; text-align: center;
+            background: radial-gradient(circle at center, #1c2128 0%, #0d1117 70%);
+        }
+
+        /* --- TIMELINE (THE PATH) --- */
+        .timeline-item {
+            background: var(--bg-panel); padding: 20px; margin-bottom: 20px; border-left: 4px solid var(--ortho-blue);
+        }
+
+        /* --- CHECKLIST (DAILY SYSTEM) --- */
+        .check-row {
+            display: flex; align-items: center; padding: 12px; background: var(--bg-card);
+            margin-bottom: 10px; border-radius: 4px; border: 1px solid var(--border);
+        }
+        .check-box {
+            width: 20px; height: 20px; border: 2px solid var(--ortho-blue); margin-right: 15px; border-radius: 3px;
+        }
+        
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="container">
+        <nav>
+            <a href="#" class="logo">Bone<span style="color:var(--ortho-blue)">bound</span></a>
+            <div class="nav-items">
+                <a href="#path">The Path</a>
+                <a href="#daily">Daily System</a>
+                <a href="#lab">Biomech Lab</a>
+                <a href="#training">Training</a>
+                <a href="#hands-on">Hands-On</a>
+                <a href="#app">App</a>
+            </div>
+        </nav>
+    </div>
+</header>
+
+<section class="hero">
+    <div class="container">
+        <h3 style="color: var(--ortho-blue);">The Road to Orthopedic Surgery</h3>
+        <h1>Forge the Body.<br>Build the Mind.<br>Engineer the Skill.</h1>
+        <p style="max-width: 600px; margin: 20px auto; font-size: 1.1rem; color: #8b949e;">
+            Stop doing generic premed work. Prepare for the most physical specialty in medicine.
+        </p>
+        <div style="margin-top: 30px;">
+            <a href="#path" class="btn">Start The Path</a>
+            <div style="margin-top: 20px; font-size: 0.9rem; color: #8b949e;">
+                <span class="tag">Train Mind</span> <span class="tag">Build Skills</span> <span class="tag">Engineer Body</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="path" class="section">
+    <div class="container">
+        <h3>02. Roadmap</h3>
+        <h2>The Path</h2>
+        <div class="timeline-item">
+            <h4>Phase 1: High School / Early College</h4>
+            <p><strong>Focus:</strong> GPA Foundation & Mechanical Identity.</p>
+            <ul>
+                <li>Build manual hobbies (woodworking/mechanics)</li>
+                <li>Establish high GPA baseline (Biology/Physics focus)</li>
+                <li>Avoid burnout: Establish sleep/lift routine</li>
+            </ul>
+        </div>
+        <div class="timeline-item">
+            <h4>Phase 2: The MCAT & Research</h4>
+            <p><strong>Focus:</strong> Academic Peak & Ortho Exposure.</p>
+            <ul>
+                <li>MCAT Score Target: 515+</li>
+                <li>Email 3 surgeons for shadowing</li>
+                <li>Start one long-term research project (not just a poster)</li>
+            </ul>
+        </div>
+        <div class="timeline-item">
+            <h4>Phase 3: Med School (M1-M3)</h4>
+            <p><strong>Focus:</strong> Anatomy Mastery & Networking.</p>
+            <ul>
+                <li>Ace Anatomy & Biomechanics</li>
+                <li>Connect with PDs (Program Directors)</li>
+                <li>Honors in Surgery Rotation</li>
+            </ul>
+        </div>
+        <div class="timeline-item">
+            <h4>Phase 4: Residency Match</h4>
+            <p><strong>Focus:</strong> Audition Rotations & Interview Skills.</p>
+            <ul>
+                <li>The "Airport Test" (Be someone they want to work with)</li>
+                <li>Showcase durability and work ethic</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<section id="daily" class="section">
+    <div class="container">
+        <div class="grid-2">
+            <div>
+                <h3>03. Protocol</h3>
+                <h2>The Daily System</h2>
+                <p>The money page. What you do every single day to become undeniable.</p>
+                <div style="margin-top: 20px;">
+                    <h4>Weekly Plan Templates</h4>
+                    <ul>
+                        <li><a href="#">Download: Weekly Study Template</a></li>
+                        <li><a href="#">Download: Training Split (Upper/Lower/Cond)</a></li>
+                        <li><a href="#">Download: Exposure Plan (Shadowing)</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div style="background: var(--bg-panel); padding: 20px; border-radius: 8px; border: 1px solid var(--border);">
+                <h4 style="margin-bottom: 15px; color: var(--ortho-blue);">DAILY CHECKLIST</h4>
+                <div class="check-row"><div class="check-box"></div>Lift (Heavy Compound)</div>
+                <div class="check-row"><div class="check-box"></div>20m Biomechanics Study</div>
+                <div class="check-row"><div class="check-box"></div>10m Dexterity/Knot Tying</div>
+                <div class="check-row"><div class="check-box"></div>10m OR Mindset (Case Review)</div>
+                <div class="check-row"><div class="check-box"></div>10m Project (Wood/BJJ/Mech)</div>
+                <div class="check-row"><div class="check-box"></div>1 Action for Career (Email/Read)</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="lifestyle" class="section">
+    <div class="container">
+        <h3>04. Optimization</h3>
+        <h2>Lifestyle & Vitality</h2>
+        <div class="grid-3">
+            <div class="card">
+                <h4>Sleep & Recovery</h4>
+                <p>Protect your sleep like a sterile field. It is where skills solidify.</p>
+            </div>
+            <div class="card">
+                <h4>Diet & Fuel</h4>
+                <p>High protein, clean fuel. You are building an athletic machine.</p>
+            </div>
+            <div class="card">
+                <h4>Time Pressure Resilience</h4>
+                <p>How to handle stress when the patient is bleeding and the clock is ticking.</p>
+            </div>
+        </div>
+        <div style="margin-top: 30px; background: var(--bg-card); padding: 20px; border-radius: 6px;">
+            <h4>Ideal Day: The Med Student</h4>
+            <p style="font-family: monospace; color: var(--ortho-blue);">
+                05:00 Wake/Hydrate<br>
+                05:30 Lift (Posterior Chain)<br>
+                07:00 Deep Work (Study)<br>
+                12:00 Research Meeting<br>
+                16:00 Dexterity Drill<br>
+                21:00 Sleep
+            </p>
+        </div>
+    </div>
+</section>
+
+<section id="skills" class="section">
+    <div class="container">
+        <h3>05. Arsenal</h3>
+        <h2>Skills & Knowledge</h2>
+        <div class="grid-2">
+            <div>
+                <h4>Knowledge Base</h4>
+                <ul>
+                    <li>Anatomy (Bones, Joints, Ligaments)</li>
+                    <li>Fracture Patterns & Classifications</li>
+                    <li>Emergency Ortho Protocols</li>
+                    <li>OR Workflow & Sterile Technique</li>
+                    <li>Imaging Interpretation (X-Ray/CT)</li>
+                </ul>
+            </div>
+            <div>
+                <h4>Technical Skills</h4>
+                <ul>
+                    <li>Hand Dexterity & Stability</li>
+                    <li>Tool Precision (Drill/Saw/Hammer)</li>
+                    <li>Suturing Basics (Vertical Mattress/Subcuticular)</li>
+                    <li>High-Level Planning Under Pressure</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="lab" class="section">
+    <div class="container">
+        <h3>06. The Brain</h3>
+        <h2>Biomechanics Lab</h2>
+        <p style="margin-bottom: 30px;">This is the core of the website. If you don't understand the physics, you are just a carpenter, not a surgeon.</p>
+        <div class="grid-3">
+            <div class="card">
+                <h4>Lever Arms & Torque</h4>
+                <p>Understanding force vectors in joint reconstruction.</p>
+            </div>
+            <div class="card">
+                <h4>Rehab Mechanics</h4>
+                <p>Load management for ACL and Rotator Cuff repair.</p>
+            </div>
+            <div class="card">
+                <h4>Case Studies</h4>
+                <ul>
+                    <li>Hip Fracture Fixation</li>
+                    <li>ACL Tear Mechanics</li>
+                    <li>Spinal Fusion Loads</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="hands-on" class="section">
+    <div class="container">
+        <h3>07. The Hands</h3>
+        <h2>Hands-On Training</h2>
+        <div class="grid-2">
+            <div class="card">
+                <h4>Woodworking</h4>
+                <ul>
+                    <li><strong>Beginner Project:</strong> Basic Box with Joinery</li>
+                    <li>Hand Saw Basics (Straight cuts)</li>
+                    <li>Clamp & Glue Techniques</li>
+                    <li>Chisel Precision</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h4>Mechanical & Fine Motor</h4>
+                <ul>
+                    <li>Building Mechanical Keyboards (Soldering)</li>
+                    <li>Watch Tinkering (Movement assembly)</li>
+                    <li>3D Printing (CAD design to physical part)</li>
+                    <li>Fine Motor Drills (Rice transfer/Suturing)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="training" class="section">
+    <div class="container">
+        <h3>08. The Engine</h3>
+        <h2>Physical Training</h2>
+        <p>Becoming Ortho-Strong. Prepared for 6-hour surgeries holding retractors.</p>
+        <div class="grid-3">
+            <div class="card">
+                <h4>Ortho Strength</h4>
+                <ul>
+                    <li><strong>Grip:</strong> Farmers Carries, Dead Hangs</li>
+                    <li><strong>Forearms:</strong> Wrist curls, Sledgehammer levers</li>
+                    <li><strong>Posterior Chain:</strong> Deadlifts, RDLs</li>
+                    <li><strong>Core:</strong> Anti-rotation (Pallof Press)</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h4>Conditioning</h4>
+                <ul>
+                    <li>Assault Bike Sprints</li>
+                    <li>Rowing Intervals</li>
+                    <li>Rucking (Weighted walking)</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h4>Mobility</h4>
+                <ul>
+                    <li>Thoracic Spine Openers</li>
+                    <li>Hip Flexor Release</li>
+                    <li>Shoulder bulletproofing</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="mindset" class="section">
+    <div class="container">
+        <h3>09. Identity</h3>
+        <h2>The Mindset</h2>
+        <div class="grid-2">
+            <div>
+                <h4>The Surgeon's Philosophy</h4>
+                <ul>
+                    <li>Stoic Practices (Control what you can)</li>
+                    <li>"Calm Under Fire" Drills</li>
+                    <li>The "Fix It" Mental Framework</li>
+                    <li>Discipline > Motivation</li>
+                </ul>
+            </div>
+            <div>
+                <h4>Recommended Reading</h4>
+                <ul>
+                    <li>"Meditations" - Marcus Aurelius</li>
+                    <li>"Complications" - Atul Gawande</li>
+                    <li>"Extreme Ownership" - Jocko Willink</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="research" class="section">
+    <div class="container">
+        <h3>10. Paperwork</h3>
+        <h2>Research & Résumé</h2>
+        <div class="grid-3">
+            <div class="card">
+                <h4>Getting Research</h4>
+                <p>Email templates to send to attendings to get on papers.</p>
+            </div>
+            <div class="card">
+                <h4>CV Construction</h4>
+                <p>How to format your CV specifically for Ortho PDs.</p>
+            </div>
+            <div class="card">
+                <h4>Publications</h4>
+                <p>Poster presentations vs. PubMed indexed papers.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+        <div class="grid-2">
+            <div>
+                <h3>11. Exposure</h3>
+                <h2>Shadowing Guide</h2>
+                <ul>
+                    <li>How to request shadowing (Email scripts)</li>
+                    <li><strong>In the OR:</strong> Where to stand, what to touch (nothing).</li>
+                    <li>What to look for: The rhythm of the team.</li>
+                    <li>Post-shadowing etiquette (Thank you notes).</li>
+                </ul>
+            </div>
+            <div>
+                <h3>12. The Vibe</h3>
+                <h2>Ortho Culture</h2>
+                <ul>
+                    <li>The Athletic/Engineering Hybrid personality.</li>
+                    <li>Confidence vs. Arrogance (The fine line).</li>
+                    <li>Teamwork dynamics in the OR.</li>
+                    <li>The "Fix It" Mindset.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="resources" class="section">
+    <div class="container">
+        <h3>13-18. The Armory</h3>
+        <h2>Tools & Resources</h2>
+        <div class="grid-4">
+            <div class="card">
+                <h4>13. Tools</h4>
+                <p>Anatomy books, woodworking kits, suture pads.</p>
+            </div>
+            <div class="card">
+                <h4>16. For Med School</h4>
+                <p>Shelf exam strategy, Step 2 CK tips, Honors rotations.</p>
+            </div>
+            <div class="card">
+                <h4>17. For Residency</h4>
+                <p>Trauma call survival, fracture management basics.</p>
+            </div>
+            <div class="card">
+                <h4>18. Downloads</h4>
+                <p>Goal sheets, biomech diagrams, year-by-year checklists.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="app" class="section" style="background: linear-gradient(to top, #0d1117, #161b22);">
+    <div class="container" style="text-align: center;">
+        <h3>14. Integration</h3>
+        <h2>The Mobile App</h2>
+        <p style="margin-bottom: 40px;">Carry the system in your pocket.</p>
+        
+        <div class="grid-3" style="text-align: left;">
+            <div class="card">
+                <h4 style="color:var(--ortho-blue)">Habit Tracker</h4>
+                <ul>
+                    <li>Log lifting sessions</li>
+                    <li>Track dexterity minutes</li>
+                    <li>Record study hours</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h4 style="color:var(--ortho-blue)">Skill Trees</h4>
+                <ul>
+                    <li>Unlock Anatomy Levels 1-5</li>
+                    <li>Biomechanics Mastery Badges</li>
+                    <li>Tool Proficiency Tracking</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h4 style="color:var(--ortho-blue)">Notifications</h4>
+                <ul>
+                    <li>"Train your dexterity"</li>
+                    <li>"Biomechanics session due"</li>
+                    <li>"Ortho case of the day"</li>
+                </ul>
+            </div>
+        </div>
+        <div style="margin-top: 40px;">
+            <a href="#" class="btn">Join The Waitlist</a>
+        </div>
+    </div>
+</section>
+
+<section id="community" class="section">
+    <div class="container" style="text-align: center;">
+        <h3>15. The Tribe</h3>
+        <h2>Community</h2>
+        <p>Find accountability partners, study groups, and ortho mentorship.</p>
+        <div style="margin-top: 20px;">
+            <a href="#" class="btn" style="background: transparent; border-color: var(--border);">Access Forums</a>
+        </div>
+    </div>
+</section>
+
+<footer style="padding: 40px 0; text-align: center; border-top: 1px solid var(--border); color: #8b949e; font-size: 0.8rem;">
+    <div class="container">
+        <p>© 2024 BONEBOUND. Engineered for the Orthopedic Pursuit.</p>
+    </div>
+</footer>
+
+</body>
+</html>
